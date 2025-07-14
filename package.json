@@ -1,22 +1,33 @@
 {
   "name": "build-my-own",
   "version": "0.0.2",
-  "description": "I build, i own.",
+  "description": "A CLI tool that helps developers learn by recreating open source projects from scratch. It sets up learning environments with AI-powered coding assistance for the 'build-your-own-X' approach.",
   "main": "dist/cjs/index.js",
   "bin": {
     "build-my-own": "./dist/cjs/index.js"
   },
   "files": [
     "dist",
-    "package.json"
+    "package.json",
+    "assets"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rslib build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "learning",
+    "education",
+    "programming",
+    "build-your-own",
+    "cli",
+    "github",
+    "ai-assisted",
+    "cursor",
+    "tutorial"
+  ],
+  "author": "https://github.com/Areo-Joe",
+  "license": "MIT",
   "dependencies": {
     "@stricli/core": "^1.2.0"
   },
