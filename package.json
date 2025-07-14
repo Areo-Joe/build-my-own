@@ -1,14 +1,18 @@
 {
   "name": "build-my-own",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "I build, i own.",
   "main": "dist/esm/index.mjs",
+  "bin": {
+    "build-my-own": "./dist/esm/index.mjs"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rslib build"
-  },
-  "bin": {
-    "build-my-own": "./dist/esm/index.mjs"
   },
   "keywords": [],
   "author": "",
