@@ -2,9 +2,9 @@
   "name": "build-my-own",
   "version": "0.0.2",
   "description": "I build, i own.",
-  "main": "dist/esm/index.mjs",
+  "main": "dist/cjs/index.js",
   "bin": {
-    "build-my-own": "./dist/esm/index.mjs"
+    "build-my-own": "./dist/cjs/index.js"
   },
   "files": [
     "dist",

@@ -1,8 +1,9 @@
 import { buildCommand, CommandContext } from "@stricli/core";
+import { buildMyOwn as buildMyOwnFn } from "../lib/buildMyOwn";
 
 export const buildMyOwn = buildCommand<{}, [string], CommandContext>({
   func(this, _, url) {
-    console.log("Github", url);
+    buildMyOwnFn(url);
   },
   parameters: {
     positional: {
