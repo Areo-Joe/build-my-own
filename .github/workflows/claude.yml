@@ -36,3 +36,5 @@ jobs:
           # Or use OAuth token instead:
           # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           timeout_minutes: "60"
+          claude_env: |
+            API_URL: https://anyrouter.top
