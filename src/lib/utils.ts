@@ -197,15 +197,10 @@ export function createDir(dirname: string, basePath: string = ".") {
  * Clone a GitHub project and set up learning environment with AI teaching rules
  * @param githubUrl GitHub repository URL
  * @param basePath Base directory path where the project should be created
- * @param editorType The editor type to setup for (auto-detect if not specified)
  */
-export async function cloneAndSetupProject(githubUrl: string, basePath: string = ".", editorType?: EditorType) {
+export async function cloneAndSetupProject(githubUrl: string, basePath: string = ".") {
   try {
     const projectName = getGithubProjectName(githubUrl);
-    
-    // Auto-detect editor if not specified
-    const selectedEditor = editorType || getDefaultEditor();
-    const config = getEditorConfig(selectedEditor);
     
     // Create project directory
     createDir(projectName, basePath);
@@ -222,15 +217,28 @@ export async function cloneAndSetupProject(githubUrl: string, basePath: string =
     const myOwnDir = bmoMyOwnProjectDir(projectName, basePath);
     fs.mkdirSync(myOwnDir, { recursive: true });
     
-    // Create rules directory (if needed) and copy rules file
-    const rulesDir = bmoRulesDir(projectName, selectedEditor, basePath);
-    if (config.rulesDir) {
-      fs.mkdirSync(rulesDir, { recursive: true });
-    }
+    // Create rules files for both editors
+    const rulesFiles = [];
+    const editorTypes: EditorType[] = ["cursor", "claude-code"];
     
-    const sourceFile = getRulesAssetPath(selectedEditor);
-    const destFile = bmoRulesFilePath(projectName, selectedEditor, basePath);
-    fs.copyFileSync(sourceFile, destFile);
+    for (const editorType of editorTypes) {
+      const config = getEditorConfig(editorType);
+      
+      // Create rules directory (if needed) and copy rules file
+      const rulesDir = bmoRulesDir(projectName, editorType, basePath);
+      if (config.rulesDir) {
+        fs.mkdirSync(rulesDir, { recursive: true });
+      }
+      
+      const sourceFile = getRulesAssetPath(editorType);
+      const destFile = bmoRulesFilePath(projectName, editorType, basePath);
+      fs.copyFileSync(sourceFile, destFile);
+      
+      rulesFiles.push({
+        editorType,
+        rulesPath: destFile,
+      });
+    }
     
     const projectDir = bmoProjectDir(basePath, projectName);
     
@@ -241,8 +249,7 @@ export async function cloneAndSetupProject(githubUrl: string, basePath: string =
       projectPath: projectDir,
       originalPath: originalProjectDir,
       myOwnPath: myOwnDir,
-      rulesPath: destFile,
-      editorType: selectedEditor,
+      rulesFiles,
       detectedEditors: detectAvailableEditors(),
     };
   } catch (error) {
@@ -255,37 +262,44 @@ export async function cloneAndSetupProject(githubUrl: string, basePath: string =
  * Create or update rules file for AI-assisted learning
  * @param projectPath Path to the project directory
  * @param rulesContent Custom rules content (optional)
- * @param editorType The editor type to setup for (auto-detect if not specified)
  */
-export async function createRulesFile(projectPath: string, rulesContent?: string, editorType?: EditorType) {
+export async function createRulesFile(projectPath: string, rulesContent?: string) {
   try {
-    const selectedEditor = editorType || getDefaultEditor();
-    const config = getEditorConfig(selectedEditor);
+    const rulesFiles = [];
+    const editorTypes: EditorType[] = ["cursor", "claude-code"];
     
-    // Create rules directory if needed
-    let rulesDir = projectPath;
-    if (config.rulesDir) {
-      rulesDir = path.join(projectPath, ...config.rulesDir.split("/"));
-      fs.mkdirSync(rulesDir, { recursive: true });
-    }
-    
-    const rulesFilePath = path.join(rulesDir, config.rulesFile);
-    
-    if (rulesContent) {
-      // Use custom rules content
-      fs.writeFileSync(rulesFilePath, rulesContent, "utf8");
-    } else {
-      // Use default rules content for the selected editor
-      const sourceFile = getRulesAssetPath(selectedEditor);
-      fs.copyFileSync(sourceFile, rulesFilePath);
+    for (const editorType of editorTypes) {
+      const config = getEditorConfig(editorType);
+      
+      // Create rules directory if needed
+      let rulesDir = projectPath;
+      if (config.rulesDir) {
+        rulesDir = path.join(projectPath, ...config.rulesDir.split("/"));
+        fs.mkdirSync(rulesDir, { recursive: true });
+      }
+      
+      const rulesFilePath = path.join(rulesDir, config.rulesFile);
+      
+      if (rulesContent) {
+        // Use custom rules content
+        fs.writeFileSync(rulesFilePath, rulesContent, "utf8");
+      } else {
+        // Use default rules content for the selected editor
+        const sourceFile = getRulesAssetPath(editorType);
+        fs.copyFileSync(sourceFile, rulesFilePath);
+      }
+      
+      rulesFiles.push({
+        editorType,
+        rulesPath: rulesFilePath,
+        customContent: !!rulesContent,
+      });
     }
     
     return {
       success: true,
-      message: `Successfully created/updated rules file for ${selectedEditor}`,
-      rulesPath: rulesFilePath,
-      editorType: selectedEditor,
-      customContent: !!rulesContent,
+      message: `Successfully created/updated rules files for all editors`,
+      rulesFiles,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

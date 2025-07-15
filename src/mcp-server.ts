@@ -26,7 +26,7 @@ const tools: Tool[] = [
   {
     name: "clone_and_setup_project",
     description:
-      "Clone a GitHub project and set up a learning environment with AI teaching rules. Creates both original and my-own directories for hands-on learning. Supports both Cursor and Claude Code editors.",
+      "Clone a GitHub project and set up a learning environment with AI teaching rules. Creates both original and my-own directories for hands-on learning. Automatically installs rules files for both Cursor and Claude Code editors.",
     inputSchema: {
       type: "object",
       properties: {
@@ -39,11 +39,6 @@ const tools: Tool[] = [
           description: "Base directory path where the project should be created (optional, defaults to current directory)",
           default: ".",
         },
-        editor_type: {
-          type: "string",
-          enum: ["cursor", "claude-code"],
-          description: "Editor type to setup for (optional, auto-detects if not specified)",
-        },
       },
       required: ["github_url"],
     },
@@ -51,7 +46,7 @@ const tools: Tool[] = [
   {
     name: "create_rules_file",
     description:
-      "Create or update AI teaching rules file for AI-assisted learning. Supports both Cursor (.cursor/rules/teach.mdc) and Claude Code (CLAUDE.md) formats. Allows customization of teaching approach.",
+      "Create or update AI teaching rules files for AI-assisted learning. Automatically creates rules files for both Cursor (.cursor/rules/teach.mdc) and Claude Code (CLAUDE.md) formats. Allows customization of teaching approach.",
     inputSchema: {
       type: "object",
       properties: {
@@ -62,11 +57,6 @@ const tools: Tool[] = [
         rules_content: {
           type: "string",
           description: "Custom rules content (optional, uses default teaching rules if not provided)",
-        },
-        editor_type: {
-          type: "string",
-          enum: ["cursor", "claude-code"],
-          description: "Editor type to setup for (optional, auto-detects if not specified)",
         },
       },
       required: ["project_path"],
@@ -104,13 +94,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case "clone_and_setup_project": {
-        const { github_url, base_path = ".", editor_type } = args as {
+        const { github_url, base_path = "." } = args as {
           github_url: string;
           base_path?: string;
-          editor_type?: "cursor" | "claude-code";
         };
         
-        const result = await cloneAndSetupProject(github_url, base_path, editor_type);
+        const result = await cloneAndSetupProject(github_url, base_path);
         return {
           content: [
             {
@@ -122,13 +111,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "create_rules_file": {
-        const { project_path, rules_content, editor_type } = args as {
+        const { project_path, rules_content } = args as {
           project_path: string;
           rules_content?: string;
-          editor_type?: "cursor" | "claude-code";
         };
         
-        const result = await createRulesFile(project_path, rules_content, editor_type);
+        const result = await createRulesFile(project_path, rules_content);
         return {
           content: [
             {
