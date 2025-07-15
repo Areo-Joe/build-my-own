@@ -24,6 +24,7 @@ const mainCommand = buildCommand<{ github?: string }, [], CommandContext>({
         kind: "parsed",
         brief: "GitHub URL to clone and set up a learning environment",
         parse: String,
+        optional: true,
       },
     },
   },
