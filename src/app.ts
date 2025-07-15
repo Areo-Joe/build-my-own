@@ -1,22 +1,38 @@
-import { buildApplication, buildRouteMap } from "@stricli/core";
+import { buildApplication, buildCommand } from "@stricli/core";
 import { CommandContext } from "@stricli/core";
 
 import { description, name, version } from "../package.json";
-import { buildMyOwn } from "./commands/buildMyOwn";
-import { mcp } from "./commands/mcp";
+import { buildMyOwnLegacy } from "./lib/buildMyOwn";
 
-const routes = buildRouteMap<"buildMyOwn" | "mcp", CommandContext>({
-  routes: {
-    buildMyOwn,
-    mcp,
+const mainCommand = buildCommand<{ github?: string }, [], CommandContext>({
+  func(this, { github }) {
+    if (github) {
+      // CLI mode with --github flag
+      buildMyOwnLegacy(github);
+    } else {
+      // Default MCP mode
+      require("./mcp-server");
+    }
+  },
+  parameters: {
+    positional: {
+      kind: "tuple",
+      parameters: [],
+    },
+    flags: {
+      github: {
+        kind: "parsed",
+        brief: "GitHub URL to clone and set up a learning environment",
+        parse: String,
+      },
+    },
   },
   docs: {
     brief: description,
   },
-  defaultCommand: "mcp", // MCP mode as default as requested
 });
 
-export const app = buildApplication<CommandContext>(routes, {
+export const app = buildApplication<CommandContext>(mainCommand, {
   name,
   versionInfo: {
     currentVersion: version,

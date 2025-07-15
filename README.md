@@ -42,7 +42,7 @@ Run:
 > The following command creates a new directory in current pwd with the name of the project.
 
 ```shell
-build-my-own buildMyOwn <github-url>
+build-my-own --github <github-url>
 ```
 
 ### MCP Integration
