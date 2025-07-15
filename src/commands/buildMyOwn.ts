@@ -1,9 +1,9 @@
 import { buildCommand, CommandContext } from "@stricli/core";
-import { buildMyOwn as buildMyOwnFn } from "../lib/buildMyOwn";
+import { buildMyOwnLegacy } from "../lib/buildMyOwn";
 
 export const buildMyOwn = buildCommand<{}, [string], CommandContext>({
   func(this, _, url) {
-    buildMyOwnFn(url);
+    buildMyOwnLegacy(url);
   },
   parameters: {
     positional: {
@@ -17,6 +17,6 @@ export const buildMyOwn = buildCommand<{}, [string], CommandContext>({
     },
   },
   docs: {
-    brief: "Transform STDIO to POST and SSE in cloudbase cloudrun.",
+    brief: "Clone a GitHub project and set up a learning environment with AI teaching rules.",
   },
 });
