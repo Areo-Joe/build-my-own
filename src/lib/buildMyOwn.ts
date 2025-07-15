@@ -6,13 +6,16 @@ import {
   bmoOriginalProjectDir,
   bmoMyOwnProjectDir,
   bmoProjectDir,
-  getTeachMdcPath,
-  bmoCursorRulesDir,
-  bmoTeachMdcPath,
+  getRulesAssetPath,
+  bmoRulesDir,
+  bmoRulesFilePath,
+  getDefaultEditor,
+  getEditorConfig,
+  EditorType,
 } from "./utils";
 import { copyFileSync, mkdirSync } from "node:fs";
 
-export function buildMyOwn(url: string, basePath: string = ".") {
+export function buildMyOwn(url: string, basePath: string = ".", editorType?: EditorType) {
   debug("Github", url);
   const projectName = getGithubProjectName(url);
   debug("Project name", projectName);
@@ -21,18 +24,29 @@ export function buildMyOwn(url: string, basePath: string = ".") {
   cloneOriginalProject(url, projectName, basePath);
   mkdirSync(bmoMyOwnProjectDir(projectName, basePath), { recursive: true });
 
-  // 创建 .cursor/rules 目录
-  const cursorRulesDir = bmoCursorRulesDir(projectName, basePath);
-  mkdirSync(cursorRulesDir, { recursive: true });
+  // Auto-detect editor if not specified
+  const selectedEditor = editorType || getDefaultEditor();
+  const config = getEditorConfig(selectedEditor);
+  
+  // Create rules directory (if needed) and copy rules file
+  const rulesDir = bmoRulesDir(projectName, selectedEditor, basePath);
+  if (config.rulesDir) {
+    mkdirSync(rulesDir, { recursive: true });
+  }
 
-  // 复制 teach.mdc 文件到 .cursor/rules 目录
-  const sourceFile = getTeachMdcPath();
-  const destFile = bmoTeachMdcPath(projectName, basePath);
+  const sourceFile = getRulesAssetPath(selectedEditor);
+  const destFile = bmoRulesFilePath(projectName, selectedEditor, basePath);
   copyFileSync(sourceFile, destFile);
 
-  debug("Copied teach.mdc to", destFile);
+  debug(`Copied ${config.rulesFile} to`, destFile);
+  debug(`Launching ${selectedEditor} editor...`);
 
-  spawnSync("cursor", [bmoProjectDir(basePath, projectName)]);
+  try {
+    spawnSync(config.launchCommand, [bmoProjectDir(basePath, projectName)]);
+  } catch (error) {
+    debug(`Failed to launch ${selectedEditor}:`, error);
+    console.warn(`Warning: Could not launch ${selectedEditor}. Please open the project manually at: ${bmoProjectDir(basePath, projectName)}`);
+  }
 }
 
 function cloneOriginalProject(url: string, projectName: string, basePath: string = ".") {
@@ -42,5 +56,5 @@ function cloneOriginalProject(url: string, projectName: string, basePath: string
 
 // Legacy function for backward compatibility
 export function buildMyOwnLegacy(url: string) {
-  return buildMyOwn(url, ".");
+  return buildMyOwn(url, ".", "cursor"); // Default to cursor for backward compatibility
 }
