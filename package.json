@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rslib build"
+    "build": "rslib build",
+    "mcp": "node ./dist/cjs/mcp-server.js"
   },
   "keywords": [
     "learning",
@@ -29,7 +30,8 @@
   "author": "https://github.com/Areo-Joe",
   "license": "MIT",
   "dependencies": {
-    "@stricli/core": "^1.2.0"
+    "@stricli/core": "^1.2.0",
+    "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
     "@rslib/core": "^0.10.5",
