@@ -6,27 +6,28 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import { cloneAndSetupProject, createRulesFile, listProjects } from "./lib/utils.js";
+import { cloneAndSetupProject } from "./lib/utils.js";
 
 const server = new Server(
   {
     name: "build-my-own",
     version: "0.0.2",
-    description: "MCP server for build-my-own - AI-powered project learning tool",
+    description:
+      "MCP server for build-my-own - AI-powered project learning tool",
   },
   {
     capabilities: {
       tools: {},
     },
-  }
+  },
 );
 
 // Define the tools that AI can use
 const tools: Tool[] = [
   {
-    name: "clone_and_setup_project",
+    name: "start_to_build_my_own_x",
     description:
-      "Clone a GitHub project and set up a learning environment with AI teaching rules. Creates both original and my-own directories for hands-on learning. Automatically installs rules files for both Cursor and Claude Code editors.",
+      "Use it when the user says they want to build their own `x`. This will clone github project and setup prompts for AI tools. AI tools then will be able to guide them rebuilding the project from 0 to 1.",
     inputSchema: {
       type: "object",
       properties: {
@@ -36,46 +37,12 @@ const tools: Tool[] = [
         },
         base_path: {
           type: "string",
-          description: "Base directory path where the project should be created (optional, defaults to current directory)",
+          description:
+            "Base directory path where the project should be created (optional, defaults to current directory)",
           default: ".",
         },
       },
       required: ["github_url"],
-    },
-  },
-  {
-    name: "create_rules_file",
-    description:
-      "Create or update AI teaching rules files for AI-assisted learning. Automatically creates rules files for both Cursor (.cursor/rules/teach.mdc) and Claude Code (CLAUDE.md) formats. Allows customization of teaching approach.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        project_path: {
-          type: "string",
-          description: "Path to the project directory",
-        },
-        rules_content: {
-          type: "string",
-          description: "Custom rules content (optional, uses default teaching rules if not provided)",
-        },
-      },
-      required: ["project_path"],
-    },
-  },
-  {
-    name: "list_projects",
-    description:
-      "List all build-my-own projects in the specified directory. Shows which editors are supported for each project.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        base_path: {
-          type: "string",
-          description: "Base directory to search for projects (optional, defaults to current directory)",
-          default: ".",
-        },
-      },
-      required: [],
     },
   },
 ];
@@ -93,51 +60,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case "clone_and_setup_project": {
+      case "start_to_build_my_own_x": {
         const { github_url, base_path = "." } = args as {
           github_url: string;
           base_path?: string;
         };
-        
+
         const result = await cloneAndSetupProject(github_url, base_path);
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
-      }
-
-      case "create_rules_file": {
-        const { project_path, rules_content } = args as {
-          project_path: string;
-          rules_content?: string;
-        };
-        
-        const result = await createRulesFile(project_path, rules_content);
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
-        };
-      }
-
-      case "list_projects": {
-        const { base_path = "." } = args as {
-          base_path?: string;
-        };
-        
-        const result = await listProjects(base_path);
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result, null, 2),
+              text: `Now the project is successfully setup. Go ahead to guide user to build their own \`x\`! You should check the rules I've setup for you, they are ${JSON.stringify(result.rulesFiles, null, 2)}. Make sure to read the content of the rules file and follow the rules according to who you are! The original project is cloned under ${result.originalPath}, and an empty folder is also created under ${result.myOwnPath}.`,
             },
           ],
         };
