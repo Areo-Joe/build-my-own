@@ -3,30 +3,150 @@ import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { debug } from "./logger";
 
+// Supported editors
+export type EditorType = "cursor" | "claude-code";
+
+// Editor configuration
+export interface EditorConfig {
+  type: EditorType;
+  rulesDir: string;
+  rulesFile: string;
+  launchCommand: string;
+}
+
 export function currentDir() {
   return process.cwd();
 }
 
 /**
+ * Get editor configuration based on editor type
+ */
+export function getEditorConfig(editorType: EditorType): EditorConfig {
+  switch (editorType) {
+    case "cursor":
+      return {
+        type: "cursor",
+        rulesDir: ".cursor/rules",
+        rulesFile: "teach.mdc",
+        launchCommand: "cursor",
+      };
+    case "claude-code":
+      return {
+        type: "claude-code",
+        rulesDir: "",
+        rulesFile: "CLAUDE.md",
+        launchCommand: "claude-code",
+      };
+    default:
+      throw new Error(`Unsupported editor type: ${editorType}`);
+  }
+}
+
+/**
+ * Detect available editors in the system
+ */
+export function detectAvailableEditors(): EditorType[] {
+  const editors: EditorType[] = [];
+  
+  // Check for Cursor
+  try {
+    const cursorResult = spawnSync("cursor", ["--version"], { timeout: 5000 });
+    if (cursorResult.status === 0) {
+      editors.push("cursor");
+    }
+  } catch (error) {
+    debug("Cursor not found:", error);
+  }
+  
+  // Check for Claude Code
+  try {
+    const claudeResult = spawnSync("claude-code", ["--version"], { timeout: 5000 });
+    if (claudeResult.status === 0) {
+      editors.push("claude-code");
+    }
+  } catch (error) {
+    debug("Claude Code not found:", error);
+  }
+  
+  return editors;
+}
+
+/**
+ * Get the default editor based on availability
+ */
+export function getDefaultEditor(): EditorType {
+  const availableEditors = detectAvailableEditors();
+  
+  // Prefer Claude Code if available, otherwise fall back to Cursor
+  if (availableEditors.includes("claude-code")) {
+    return "claude-code";
+  } else if (availableEditors.includes("cursor")) {
+    return "cursor";
+  }
+  
+  // Default to cursor if no editors detected (for backward compatibility)
+  return "cursor";
+}
+
+/**
+ * Get the path to rules file in assets directory based on editor type
+ * @param editorType The editor type (cursor or claude-code)
+ */
+export function getRulesAssetPath(editorType: EditorType = "cursor") {
+  const config = getEditorConfig(editorType);
+  return path.resolve(__dirname, "..", "..", "assets", config.rulesFile);
+}
+
+/**
  * Get the path to teach.mdc file in assets directory
  * 直接使用相对路径：从 src/lib/ 到 assets/teach.mdc
+ * @deprecated Use getRulesAssetPath instead
  */
 export function getTeachMdcPath() {
-  return path.resolve(__dirname, "..", "..", "assets", "teach.mdc");
+  return getRulesAssetPath("cursor");
+}
+
+/**
+ * Get the rules directory path for a project based on editor type
+ * @param projectName The project name
+ * @param editorType The editor type (cursor or claude-code)
+ * @param basePath The base path (default: ".")
+ */
+export function bmoRulesDir(projectName: string, editorType: EditorType = "cursor", basePath: string = ".") {
+  const config = getEditorConfig(editorType);
+  if (config.rulesDir) {
+    return bmoProjectDir(basePath, projectName, ...config.rulesDir.split("/"));
+  }
+  // For Claude Code, rules file is in the project root
+  return bmoProjectDir(basePath, projectName);
+}
+
+/**
+ * Get the path for rules file in the project directory
+ * @param projectName The project name
+ * @param editorType The editor type (cursor or claude-code)
+ * @param basePath The base path (default: ".")
+ */
+export function bmoRulesFilePath(projectName: string, editorType: EditorType = "cursor", basePath: string = ".") {
+  const config = getEditorConfig(editorType);
+  const rulesDir = bmoRulesDir(projectName, editorType, basePath);
+  return path.join(rulesDir, config.rulesFile);
 }
 
 /**
  * Get the .cursor/rules directory path for a project
+ * @deprecated Use bmoRulesDir instead
  */
 export function bmoCursorRulesDir(projectName: string, basePath: string = ".") {
-  return bmoProjectDir(basePath, projectName, ".cursor", "rules");
+  return bmoRulesDir(projectName, "cursor", basePath);
 }
 
 /**
  * Get the path for teach.mdc in the project's .cursor/rules directory
+ * @deprecated Use bmoRulesFilePath instead
  */
 export function bmoTeachMdcPath(projectName: string, basePath: string = ".") {
-  return bmoProjectDir(basePath, projectName, ".cursor", "rules", "teach.mdc");
+  return bmoRulesFilePath(projectName, "cursor", basePath);
 }
 
 export function bmoProjectDir(basePath: string = ".", ...paths: string[]) {
@@ -97,13 +217,28 @@ export async function cloneAndSetupProject(githubUrl: string, basePath: string =
     const myOwnDir = bmoMyOwnProjectDir(projectName, basePath);
     fs.mkdirSync(myOwnDir, { recursive: true });
     
-    // Create .cursor/rules directory and copy teach.mdc
-    const cursorRulesDir = bmoCursorRulesDir(projectName, basePath);
-    fs.mkdirSync(cursorRulesDir, { recursive: true });
+    // Create rules files for both editors
+    const rulesFiles = [];
+    const editorTypes: EditorType[] = ["cursor", "claude-code"];
     
-    const sourceFile = getTeachMdcPath();
-    const destFile = bmoTeachMdcPath(projectName, basePath);
-    fs.copyFileSync(sourceFile, destFile);
+    for (const editorType of editorTypes) {
+      const config = getEditorConfig(editorType);
+      
+      // Create rules directory (if needed) and copy rules file
+      const rulesDir = bmoRulesDir(projectName, editorType, basePath);
+      if (config.rulesDir) {
+        fs.mkdirSync(rulesDir, { recursive: true });
+      }
+      
+      const sourceFile = getRulesAssetPath(editorType);
+      const destFile = bmoRulesFilePath(projectName, editorType, basePath);
+      fs.copyFileSync(sourceFile, destFile);
+      
+      rulesFiles.push({
+        editorType,
+        rulesPath: destFile,
+      });
+    }
     
     const projectDir = bmoProjectDir(basePath, projectName);
     
@@ -114,7 +249,8 @@ export async function cloneAndSetupProject(githubUrl: string, basePath: string =
       projectPath: projectDir,
       originalPath: originalProjectDir,
       myOwnPath: myOwnDir,
-      rulesPath: destFile,
+      rulesFiles,
+      detectedEditors: detectAvailableEditors(),
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -123,33 +259,47 @@ export async function cloneAndSetupProject(githubUrl: string, basePath: string =
 }
 
 /**
- * Create or update cursor rules file for AI-assisted learning
+ * Create or update rules file for AI-assisted learning
  * @param projectPath Path to the project directory
  * @param rulesContent Custom rules content (optional)
  */
 export async function createRulesFile(projectPath: string, rulesContent?: string) {
   try {
-    const cursorRulesDir = path.join(projectPath, ".cursor", "rules");
+    const rulesFiles = [];
+    const editorTypes: EditorType[] = ["cursor", "claude-code"];
     
-    // Ensure .cursor/rules directory exists
-    fs.mkdirSync(cursorRulesDir, { recursive: true });
-    
-    const rulesFilePath = path.join(cursorRulesDir, "teach.mdc");
-    
-    if (rulesContent) {
-      // Use custom rules content
-      fs.writeFileSync(rulesFilePath, rulesContent, "utf8");
-    } else {
-      // Use default teach.mdc content
-      const sourceFile = getTeachMdcPath();
-      fs.copyFileSync(sourceFile, rulesFilePath);
+    for (const editorType of editorTypes) {
+      const config = getEditorConfig(editorType);
+      
+      // Create rules directory if needed
+      let rulesDir = projectPath;
+      if (config.rulesDir) {
+        rulesDir = path.join(projectPath, ...config.rulesDir.split("/"));
+        fs.mkdirSync(rulesDir, { recursive: true });
+      }
+      
+      const rulesFilePath = path.join(rulesDir, config.rulesFile);
+      
+      if (rulesContent) {
+        // Use custom rules content
+        fs.writeFileSync(rulesFilePath, rulesContent, "utf8");
+      } else {
+        // Use default rules content for the selected editor
+        const sourceFile = getRulesAssetPath(editorType);
+        fs.copyFileSync(sourceFile, rulesFilePath);
+      }
+      
+      rulesFiles.push({
+        editorType,
+        rulesPath: rulesFilePath,
+        customContent: !!rulesContent,
+      });
     }
     
     return {
       success: true,
-      message: `Successfully created/updated rules file`,
-      rulesPath: rulesFilePath,
-      customContent: !!rulesContent,
+      message: `Successfully created/updated rules files for all editors`,
+      rulesFiles,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -179,16 +329,30 @@ export async function listProjects(basePath: string = ".") {
         // Check if this looks like a build-my-own project
         const originalDir = path.join(projectPath, `${item.name}-original`);
         const myOwnDir = path.join(projectPath, `${item.name}-my-own`);
-        const rulesFile = path.join(projectPath, ".cursor", "rules", "teach.mdc");
         
-        if (fs.existsSync(originalDir) || fs.existsSync(myOwnDir) || fs.existsSync(rulesFile)) {
+        // Check for rules files for different editors
+        const cursorRulesFile = path.join(projectPath, ".cursor", "rules", "teach.mdc");
+        const claudeRulesFile = path.join(projectPath, "CLAUDE.md");
+        
+        const hasRulesFiles = fs.existsSync(cursorRulesFile) || fs.existsSync(claudeRulesFile);
+        
+        if (fs.existsSync(originalDir) || fs.existsSync(myOwnDir) || hasRulesFiles) {
           const projectInfo: any = {
             name: item.name,
             path: projectPath,
             hasOriginal: fs.existsSync(originalDir),
             hasMyOwn: fs.existsSync(myOwnDir),
-            hasRules: fs.existsSync(rulesFile),
+            hasRules: hasRulesFiles,
+            supportedEditors: [],
           };
+          
+          // Determine which editors are supported
+          if (fs.existsSync(cursorRulesFile)) {
+            projectInfo.supportedEditors.push("cursor");
+          }
+          if (fs.existsSync(claudeRulesFile)) {
+            projectInfo.supportedEditors.push("claude-code");
+          }
           
           // Try to read package.json for additional info
           const packageJsonPath = path.join(originalDir, "package.json");

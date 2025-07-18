@@ -1,11 +1,12 @@
 # build-my-own
 
-`build-my-own` is a CLI tool for `Build Your Own X`. It clones a GitHub project and sets up cursor rules, so that you can make AI guide you to rebuild the project from the ground up. Through rebuilding a version of your own, I believe that you can better understand the project.
+`build-my-own` is a CLI tool for `Build Your Own X`. It clones a GitHub project and sets up AI teaching rules for both Cursor and Claude Code editors, so that you can make AI guide you to rebuild the project from the ground up. Through rebuilding a version of your own, I believe that you can better understand the project.
 
 ## Features
 
 - **CLI Mode**: Traditional command-line interface for project setup
 - **MCP Mode**: Model Context Protocol server for AI integration
+- **Multi-Editor Support**: Works with both Cursor and Claude Code editors
 - **AI-Friendly Tools**: Dynamic path support for flexible project management
 - **Learning Environment**: Automatic setup of teaching rules and project structure
 
@@ -25,9 +26,9 @@ This starts an MCP server with stdio transport, providing AI assistants with too
 - List existing build-my-own projects
 
 The MCP server provides three main tools:
-- `clone_and_setup_project`: Clone repos and setup learning environments
-- `create_rules_file`: Create/update AI teaching rules
-- `list_projects`: List all build-my-own projects in a directory
+- `clone_and_setup_project`: Clone repos and setup learning environments (supports both Cursor and Claude Code)
+- `create_rules_file`: Create/update AI teaching rules for your preferred editor
+- `list_projects`: List all build-my-own projects with editor support information
 
 ### CLI Mode
 
@@ -58,6 +59,7 @@ To use with AI assistants that support MCP:
 
 When a project is cloned, `build-my-own` creates:
 
+### For Cursor:
 ```
 project-name/
 ├── project-name-original/    # The original cloned repository
@@ -66,3 +68,13 @@ project-name/
     └── rules/
         └── teach.mdc         # AI teaching rules for guided learning
 ```
+
+### For Claude Code:
+```
+project-name/
+├── project-name-original/    # The original cloned repository
+├── project-name-my-own/      # Your workspace for rebuilding
+└── CLAUDE.md                 # AI teaching rules for guided learning
+```
+
+The tool automatically detects your preferred editor and sets up the appropriate configuration.
