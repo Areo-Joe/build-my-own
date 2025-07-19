@@ -2,16 +2,16 @@ import { buildApplication, buildCommand } from "@stricli/core";
 import { CommandContext } from "@stricli/core";
 
 import { description, name, version } from "../package.json";
-import { buildMyOwnLegacy } from "./lib/buildMyOwn";
+import { runMcpServer } from "./mcp-server";
+import { cloneAndSetupProject } from "./lib/utils";
 
 const mainCommand = buildCommand<{ github?: string }, [], CommandContext>({
-  func(this, { github }) {
+  func: async ({ github }) => {
     if (github) {
       // CLI mode with --github flag
-      buildMyOwnLegacy(github);
+      cloneAndSetupProject(github);
     } else {
-      // Default MCP mode
-      require("./mcp-server");
+      await runMcpServer();
     }
   },
   parameters: {

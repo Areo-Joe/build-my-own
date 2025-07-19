@@ -1,17 +1,15 @@
 #!/usr/bin/env node
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-} from "@modelcontextprotocol/sdk/types.js";
 import { cloneAndSetupProject } from "./lib/utils.js";
+import { debug } from "./lib/logger.js";
+import { version } from "../package.json";
+import { z } from "zod";
 
-const server = new Server(
+const server = new McpServer(
   {
     name: "build-my-own",
-    version: "0.0.2",
+    version,
     description:
       "MCP server for build-my-own - AI-powered project learning tool",
   },
@@ -22,86 +20,41 @@ const server = new Server(
   },
 );
 
-// Define the tools that AI can use
-const tools: Tool[] = [
+server.registerTool(
+  "start_to_build_my_own_x",
   {
-    name: "start_to_build_my_own_x",
     description:
       "Use it when the user says they want to build their own `x`. This will clone github project and setup prompts for AI tools. AI tools then will be able to guide them rebuilding the project from 0 to 1.",
     inputSchema: {
-      type: "object",
-      properties: {
-        github_url: {
-          type: "string",
-          description: "GitHub repository URL to clone (must end with .git)",
-        },
-        base_path: {
-          type: "string",
-          description:
-            "Base directory path where the project should be created (optional, defaults to current directory)",
-          default: ".",
-        },
-      },
-      required: ["github_url"],
+      a: z.number(),
+      github_url: z
+        .string()
+        .describe("GitHub repository URL to clone (must end with .git)"),
+      base_path: z
+        .string()
+        .describe(
+          "Base directory path where the project should be created (optional, defaults to current directory)",
+        )
+        .optional()
+        .default("."),
     },
   },
-];
-
-// List tools handler
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools,
-  };
-});
-
-// Call tool handler
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  try {
-    switch (name) {
-      case "start_to_build_my_own_x": {
-        const { github_url, base_path = "." } = args as {
-          github_url: string;
-          base_path?: string;
-        };
-
-        const result = await cloneAndSetupProject(github_url, base_path);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Now the project is successfully setup. Go ahead to guide user to build their own \`x\`! You should check the rules I've setup for you, they are ${JSON.stringify(result.rulesFiles, null, 2)}. Make sure to read the content of the rules file and follow the rules according to who you are! The original project is cloned under ${result.originalPath}, and an empty folder is also created under ${result.myOwnPath}.`,
-            },
-          ],
-        };
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+  async ({ github_url, base_path }) => {
+    const result = await cloneAndSetupProject(github_url, base_path);
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({ error: errorMessage }, null, 2),
+          text: `Now the project is successfully setup. Go ahead to guide user to build their own \`x\`! You should check the rules I've setup for you, they are ${JSON.stringify(result.rulesFiles, null, 2)}. Make sure to read the content of the rules file and follow the rules according to who you are! The original project is cloned under ${result.originalPath}, and an empty folder is also created under ${result.myOwnPath}.`,
         },
       ],
-      isError: true,
     };
-  }
-});
+  },
+);
 
 // Start the server
-async function main() {
+export async function runMcpServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Build-my-own MCP server started");
+  debug("Build-my-own MCP server started");
 }
-
-main().catch((error) => {
-  console.error("Server error:", error);
-  process.exit(1);
-});

@@ -1,3 +1,3 @@
 export function debug(...props: unknown[]) {
-  console.log(...props);
+  console.error("[build-my-own]", ...props);
 }
