@@ -23,7 +23,14 @@ const mainCommand = buildCommand<{ github?: string }, [], CommandContext>({
       github: {
         kind: "parsed",
         brief: "GitHub URL to clone and set up a learning environment",
-        parse: String,
+        parse: (x) => {
+          const trimmed = x.trim();
+          if (!trimmed.endsWith(".git")) {
+            throw new Error("URL provided should end with `.git`");
+          } else {
+            return trimmed;
+          }
+        },
         optional: true,
       },
     },
