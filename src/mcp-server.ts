@@ -30,17 +30,10 @@ server.registerTool(
       github_url: z
         .string()
         .describe("GitHub repository URL to clone (must end with .git)"),
-      base_path: z
-        .string()
-        .describe(
-          "Base directory path where the project should be created (optional, defaults to current directory)",
-        )
-        .optional()
-        .default("."),
     },
   },
-  async ({ github_url, base_path }) => {
-    const result = await cloneAndSetupProject(github_url, base_path);
+  async ({ github_url }) => {
+    const result = await cloneAndSetupProject(github_url);
     return {
       content: [
         {

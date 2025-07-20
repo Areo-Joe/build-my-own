@@ -2,9 +2,9 @@
   "name": "build-my-own",
   "version": "0.0.3",
   "description": "A CLI tool that helps developers learn by recreating open source projects from scratch. It sets up learning environments with AI-powered coding assistance for the 'build-your-own-X' approach.",
-  "main": "dist/cjs/index.js",
+  "main": "dist/index.js",
   "bin": {
-    "build-my-own": "./dist/cjs/index.js"
+    "build-my-own": "./dist/index.js"
   },
   "files": [
     "dist",
