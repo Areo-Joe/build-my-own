@@ -1,36 +1,38 @@
 # build-my-own
 
-`build-my-own` is a CLI tool for `Build Your Own X`. It clones a GitHub project and sets up AI teaching rules for both Cursor and Claude Code editors, so that you can make AI guide you to rebuild the project from the ground up. Through rebuilding a version of your own, I believe that you can better understand the project.
+## Introduction
 
-## Features
+`build-my-own` is an AI-friendly CLI tool. Use `build-my-own` to replicate any GitHub project. It sets up the directory structure, prompts, and rules for AI, enabling it to assist you—more like guiding you—to recreate your desired project from scratch. Throughout the process, you’ll collaborate with AI to think through the details of project implementation and understand its principles. Ultimately, you’ll gain a fresh, deeper, and practical understanding of the project.
 
-- **CLI Mode**: Traditional command-line interface for project setup
-- **MCP Mode**: Model Context Protocol server for AI integration
-- **Multi-Editor Support**: Works with both Cursor and Claude Code editors
-- **AI-Friendly Tools**: Dynamic path support for flexible project management
-- **Learning Environment**: Automatic setup of teaching rules and project structure
+## Usage
 
-## usage
+`build-my-own` offers two usage modes:
+- MCP Server: Starts an Stdio MCP Server for use in Cursor, Claude Code, or other AI tools.
+- CLI: Builds an AI-friendly directory structure and prompts via CLI.
 
-### MCP Mode (Default)
+### MCP Server
 
-`build-my-own` now supports MCP (Model Context Protocol) for seamless AI integration:
-
-```shell
-npx -y build-my-own
+Configure the MCP Server in your AI tool:
+```json
+{
+  "mcp": {
+    "servers": {
+      "everything": {
+        "command": "npx",
+        "args": ["-y", "build-my-own"]
+      }
+    }
+  }
+}
 ```
 
-This starts an MCP server with stdio transport, providing AI assistants with tools to:
-- Clone and setup projects with dynamic paths
-- Create and manage cursor rules files
-- List existing build-my-own projects
+Then, you can interact with AI. For example, to replicate the Redux project:
 
-The MCP server provides three main tools:
-- `clone_and_setup_project`: Clone repos and setup learning environments (supports both Cursor and Claude Code)
-- `create_rules_file`: Create/update AI teaching rules for your preferred editor
-- `list_projects`: List all build-my-own projects with editor support information
+```plaintext
+I want to rebuild Redux, help me with the build-my-own tool.
+```
 
-### CLI Mode
+### CLI
 
 Install:
 
@@ -38,43 +40,18 @@ Install:
 npm i -g build-my-own
 ```
 
-Run:
-
-> The following command creates a new directory in current pwd with the name of the project.
+Usage:
 
 ```shell
-build-my-own --github <github-url>
+// github-project-url should be provided
+build-my-own --github <github-project-url>
 ```
 
-### MCP Integration
+## Why I Built This Project
 
-To use with AI assistants that support MCP:
+AI can generate code, but we humans need to master the code it produces. Here are two reasons why:
 
-1. Start the server: `npx -y build-my-own`
-2. The AI can now use the provided tools to help you learn by rebuilding projects
-3. Projects are created with flexible paths as specified by the AI
-4. Teaching rules are automatically configured for optimal learning
+- Humans maintain the code: If we don’t understand the code AI generates, we can’t maintain it. If AI becomes unreliable or unable to fix issues it creates, the entire project could collapse.
+- If you’re using AI to generate code you don’t understand, you’re just creating another potentially unstable product for the world, and you’re not growing personally.
 
-## Project Structure
-
-When a project is cloned, `build-my-own` creates:
-
-### For Cursor:
-```
-project-name/
-├── project-name-original/    # The original cloned repository
-├── project-name-my-own/      # Your workspace for rebuilding
-└── .cursor/
-    └── rules/
-        └── teach.mdc         # AI teaching rules for guided learning
-```
-
-### For Claude Code:
-```
-project-name/
-├── project-name-original/    # The original cloned repository
-├── project-name-my-own/      # Your workspace for rebuilding
-└── CLAUDE.md                 # AI teaching rules for guided learning
-```
-
-The tool automatically detects your preferred editor and sets up the appropriate configuration.
+Using AI alongside human knowledge to boost efficiency is crucial. Equally important is leveraging AI as a powerful tool for self-evolution, quickly internalizing unfamiliar knowledge into our own capabilities.
