@@ -43,7 +43,7 @@ npm i -g build-my-own
 Usage:
 
 ```shell
-// github-project-url should be provided
+// github-project-url should be ended with `.git`
 build-my-own --github <github-project-url>
 ```
 

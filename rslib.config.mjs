@@ -6,7 +6,7 @@ export default defineConfig({
       format: "cjs",
       output: {
         distPath: {
-          root: "./dist/cjs",
+          root: "./dist",
         },
       },
     },
