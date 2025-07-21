@@ -4,6 +4,11 @@
 
 `build-my-own` is an AI-friendly CLI tool. Use `build-my-own` to replicate any GitHub project. It sets up the directory structure, prompts, and rules for AI, enabling it to assist you—more like guiding you—to recreate your desired project from scratch. Throughout the process, you’ll collaborate with AI to think through the details of project implementation and understand its principles. Ultimately, you’ll gain a fresh, deeper, and practical understanding of the project.
 
+## Prerequisites
+
+- Node.js
+- `git` command available
+
 ## Usage
 
 `build-my-own` offers two usage modes:
