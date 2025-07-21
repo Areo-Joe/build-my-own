@@ -26,7 +26,6 @@ server.registerTool(
     description:
       "Use it when the user says they want to build their own `x`. This will clone github project and setup prompts for AI tools. AI tools then will be able to guide them rebuilding the project from 0 to 1.",
     inputSchema: {
-      a: z.number(),
       github_url: z
         .string()
         .describe("GitHub repository URL to clone (must end with .git)"),
