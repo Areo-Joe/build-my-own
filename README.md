@@ -15,12 +15,10 @@
 Configure the MCP Server in your AI tool:
 ```json
 {
-  "mcp": {
-    "servers": {
-      "everything": {
-        "command": "npx",
-        "args": ["-y", "build-my-own"]
-      }
+  "mcpServers": {
+    "build-my-own": {
+      "command": "npx",
+      "args": ["-y", "build-my-own"]
     }
   }
 }
